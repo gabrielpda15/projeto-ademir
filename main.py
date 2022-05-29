@@ -19,11 +19,11 @@ if not db_status:
 time = datetime.now()
 
 all_folders = [(e.split('\\')[-2]) for e in glob(".\\dataset\\*\\")]
-progress_bar = Bar(max=len(all_folders))
+progress_bar = Bar(max=len(glob(".\\dataset\\**\\*.txt")) + len(glob(".\\query\\**\\*.txt")))
 for folder in all_folders:
-    progress_bar.message = log_header("INFO") + 'Reading files'
-    progress_bar.next()
     for file_path in getFilesInFolder(folder):
+        progress_bar.message = log_header("INFO") + 'Reading files'
+        progress_bar.next()
         with open(file_path[0], 'rb') as file:
             file_name = file_path[0].split('\\')[-1].split('.')[0]
             binary_content = file.read()
