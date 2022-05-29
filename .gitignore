@@ -1,0 +1,9 @@
+__pycache__/
+
+dataset/*
+!dataset/.gitkeep
+
+query/*
+!query/.gitkeep
+
+database.db
