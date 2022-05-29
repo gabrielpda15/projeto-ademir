@@ -7,3 +7,4 @@ query/*
 !query/.gitkeep
 
 database.db
+database.db-journal

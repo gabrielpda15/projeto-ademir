@@ -24,8 +24,11 @@ def find(term_id: int, values: list[FileTerm]) -> FileTerm:
             return item
     return None
 
-def log(message: str, severity: str) -> None:
+def log_header(severity: str) -> str:
     log_message = "[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] "
     log_message += severity.upper().rjust(6) + " : "
-    log_message += message
-    print(log_message)
+    return log_message
+
+def log(message: str, severity: str) -> None:
+    temp = log_header(severity)
+    print(temp + message)
