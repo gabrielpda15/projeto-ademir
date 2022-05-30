@@ -1,6 +1,6 @@
 from glob import glob
 from datetime import datetime, timedelta
-from models import FileTerm
+from library.models import FileTerm
 
 def getFilesInFolder(folder: str) -> list[tuple[str, str]]:
     dataset = glob(f".\\dataset\\{folder}\\*.txt")

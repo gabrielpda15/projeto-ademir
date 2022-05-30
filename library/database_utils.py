@@ -1,6 +1,6 @@
 from sqlite3 import Error, connect
-from utils import log
-from models import File, Term, FileTerm, Similarity, createFileTerm, createFile
+from library.utils import log
+from library.models import File, Term, FileTerm, Similarity, createFileTerm, createFile
 
 class Database:
     name: str
@@ -325,6 +325,27 @@ class Database:
             cur.execute(sql, [obj.query_id, obj.dataset_id, obj.value])
             connection.commit()
             return cur.lastrowid
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return -1
+        finally:
+            connection.close()
+
+    def getSimilarity(self, query_id: int, count: int) -> list[tuple[str, str, float]]:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = """
+                SELECT f.code, f.folder, s.value FROM similarities s
+                INNER JOIN files f ON f.id = s.dataset_id
+                WHERE s.query_id = ?
+                ORDER BY s.value DESC 
+                LIMIT ?
+            """
+            cur.execute(sql, [query_id, count])
+            return cur.fetchall()
         except Error as error:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
