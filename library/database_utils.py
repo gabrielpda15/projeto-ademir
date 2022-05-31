@@ -231,7 +231,7 @@ class Database:
 
         try:
             cur = connection.cursor()
-            temp_values = ','.join([f'({e[0]},{e[1]})' for e in values])
+            temp_values = ','.join([f'({e},{values[e]})' for e in values])
             sql = f"""
                 WITH tmp(term_id, idf) AS (
                     VALUES {temp_values}
