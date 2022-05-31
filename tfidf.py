@@ -16,20 +16,28 @@ for item in all_fileterms:
     progress_bar.message = log_header("INFO") + 'Calculating'
     progress_bar.next()
     item.tf = 1 + log2(item.count)
-    database.updateTermFrequency(item)
+database.updateTermFrequencies(all_fileterms)
 progress_bar.finish()
+
+all_fileterms.clear()
 
 log("Calculating inverse document frequency...", "INFO")
 
 n_files = database.getNumberOfFiles()
 terms_ids = database.getTermsIds()
+n_files_per_term = database.getFileTermsCount()
+idf_result: dict[int, float] = {}
 progress_bar = Bar(max = len(terms_ids))
 for term_id in terms_ids:
     progress_bar.message = log_header("INFO") + 'Calculating'
     progress_bar.next()
-    n = database.getFileTermsCount(term_id)
-    database.updateInverseDocFrequency(term_id, log2(n_files / n))
+    idf_result[term_id] = log2(n_files / n_files_per_term[term_id])
+database.updateInverseDocFrequencies(idf_result)
 progress_bar.finish()
+
+terms_ids.clear()
+n_files_per_term.clear()
+idf_result.clear()
 
 log("Calculating TF-IDF...", "INFO")
 

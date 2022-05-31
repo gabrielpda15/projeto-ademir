@@ -1,6 +1,6 @@
 from sqlite3 import Error, connect
 from library.utils import log
-from library.models import File, Term, FileTerm, Similarity, createFileTerm, createFile
+from library.models import File, Term, FileTerm, Similarity, createFileTerm, createFile, createTerm
 
 class Database:
     name: str
@@ -111,6 +111,26 @@ class Database:
         finally:
             connection.close()
 
+    def createTerms(self, values: list[tuple[str,int]]) -> bool:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = f"INSERT OR IGNORE INTO terms (term, count) VALUES "
+            sql += ','.join([f'(?,?)' for e in values])
+            temp_values = []
+            for e in values:
+                temp_values.extend(e)
+            cur.execute(sql, temp_values)
+            connection.commit()
+            return True
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
+        finally:
+            connection.close()
+
     def updateTerm(self, obj: Term, count: int) -> int:
         connection = connect(self.name)
 
@@ -132,19 +152,24 @@ class Database:
         finally:
             connection.close()
 
-    def createFileTerm(self, obj: FileTerm) -> int:
+    def createFileTerms(self, values: list[FileTerm]) -> bool:
         connection = connect(self.name)
 
         try:
             cur = connection.cursor()
-            sql = "INSERT INTO file_terms(term_id, file_id, count) VALUES(?,?,?)"
-            cur.execute(sql, [obj.term_id, obj.file_id, obj.count])
+            sql = f"INSERT INTO file_terms(term_id, file_id, count) VALUES {','.join(['(?,?,?)' for e in values])}"
+            temp_values = []
+            for e in values:
+                temp_values.append(e.term_id)
+                temp_values.append(e.file_id)
+                temp_values.append(e.count)
+            cur.execute(sql, temp_values)
             connection.commit()
-            return cur.lastrowid
+            return True
         except Error as error:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
-            return -1
+            return False
         finally:
             connection.close()
 
@@ -163,6 +188,37 @@ class Database:
         finally:
             connection.close()
 
+    def updateTermFrequencies(self, values: list[FileTerm]) -> bool:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = f"""
+                WITH tmp(file_id, term_id, tf) AS (
+                    VALUES {','.join([f'(?,?,?)' for e in values])}
+                )
+                UPDATE file_terms SET tf = (
+                    SELECT tf
+                    FROM tmp
+                    WHERE file_terms.file_id = tmp.file_id AND file_terms.term_id = tmp.term_id
+                )
+                WHERE file_id IN (SELECT file_id FROM tmp) AND term_id IN (SELECT term_id FROM tmp)
+            """
+            temp_values = []
+            for e in values:
+                temp_values.append(e.file_id)
+                temp_values.append(e.term_id)
+                temp_values.append(e.tf)
+            cur.execute(sql, temp_values)
+            connection.commit()
+            return True
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
+        finally:
+            connection.close()
+
     def updateTermFrequency(self, obj: FileTerm) -> FileTerm:
         connection = connect(self.name)
 
@@ -176,6 +232,37 @@ class Database:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
             return None
+        finally:
+            connection.close()
+
+    def updateInverseDocFrequencies(self, values: dict[int, float]) -> bool:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = f"""
+                WITH tmp(term_id, idf) AS (
+                    VALUES {','.join([f'(?,?)' for e in values])}
+                )
+                UPDATE terms SET idf = (
+                    SELECT idf
+                    FROM tmp
+                    WHERE terms.id = tmp.term_id
+                )
+                WHERE id IN (SELECT term_id FROM tmp)
+            """
+            temp_values = []
+            for e in values:
+                temp_values.append(e)
+                temp_values.append(values[e])
+
+            cur.execute(sql, temp_values)
+            connection.commit()            
+            return True
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
         finally:
             connection.close()
 
@@ -225,14 +312,29 @@ class Database:
         finally:
             connection.close()
 
-    def getFileTermsCount(self, term_id: int) -> int:
+    def getTerms(self) -> list[Term]:
         connection = connect(self.name)
 
         try:
             cur = connection.cursor()
-            sql = "SELECT count(*) FROM file_terms WHERE term_id = ?"
-            cur.execute(sql, [term_id])
-            return cur.fetchone()[0]
+            sql = "SELECT id, term, count, idf FROM terms"
+            cur.execute(sql)
+            return [createTerm(e) for e in cur.fetchall()]
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return None
+        finally:
+            connection.close()
+
+    def getFileTermsCount(self) -> dict[int, int]:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = "SELECT term_id, count(*) FROM file_terms GROUP BY term_id"
+            cur.execute(sql)
+            return dict(cur.fetchall())
         except Error as error:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
@@ -289,9 +391,22 @@ class Database:
 
         try:
             cur = connection.cursor()
-            for item in values:
-                sql = "UPDATE files SET norm_index = ? WHERE id = ?"
-                cur.execute(sql, [item[1], item[0]])
+            sql = f"""
+                WITH tmp(id, norm_index) AS (
+                    VALUES {','.join([f'(?,?)' for e in values])}
+                )
+                UPDATE files SET norm_index = (
+                    SELECT norm_index
+                    FROM tmp
+                    WHERE files.id = tmp.id
+                )
+                WHERE id IN (SELECT id FROM tmp)
+            """
+            temp_values = []
+            for e in values:
+                temp_values.append(e[0])
+                temp_values.append(e[1])            
+            cur.execute(sql, temp_values)                
             connection.commit()
             return True
         except Error as error:
@@ -313,6 +428,28 @@ class Database:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
             return None
+        finally:
+            connection.close()
+
+    def createSimilarities(self, values: list[Similarity]) -> bool:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = "INSERT INTO similarities(query_id, dataset_id, value) VALUES "
+            sql += ','.join([f'(?,?,?)' for e in values])
+            temp_values = []
+            for e in values:
+                temp_values.append(e.query_id)
+                temp_values.append(e.dataset_id)
+                temp_values.append(e.value)
+            cur.execute(sql, temp_values)
+            connection.commit()
+            return True
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
         finally:
             connection.close()
 

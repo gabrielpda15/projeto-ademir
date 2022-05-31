@@ -62,3 +62,9 @@ def createFile(data: tuple[str, str, str, int, int, float]) -> File:
     obj.norm_index = data[5]
     return obj
 
+def createTerm(data: tuple[int, str, int, float]) -> File:
+    obj = Term(data[1])
+    obj.id = data[0]
+    obj.count = data[2]
+    obj.idf = data[3]
+    return obj
