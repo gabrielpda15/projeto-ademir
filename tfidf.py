@@ -3,8 +3,9 @@ from sys import exit
 from library.database_utils import Database
 from library.utils import getElapsedTime, log, log_header
 from library.maths import calcNormIndex
-from math import log2
+from math import log2, ceil
 from progress.bar import Bar
+from itertools import islice
 
 def execute(database_name: str) -> None:
     database = Database(database_name)
@@ -18,8 +19,23 @@ def execute(database_name: str) -> None:
         progress_bar.next()
         item.tf = 1 + log2(item.count)
     progress_bar.finish()
+
     log("Saving term frequency...", "INFO")
-    database.updateTermFrequencies(all_fileterms)
+    if (len(all_fileterms) < 10000):
+        database.updateTermFrequencies(all_fileterms)
+    else:   
+        progress_bar = Bar(max = 100)
+        slice_size = ceil(len(all_fileterms) / 100)
+        for n in range(1, 101):
+            progress_bar.message = log_header("INFO") + 'Saving'
+            progress_bar.next()
+            min_index = slice_size * (n - 1) 
+            max_index = slice_size * n
+            if min_index + slice_size > len(all_fileterms):
+                max_index = None
+            sliced_fileterms = list(islice(all_fileterms, min_index, max_index))
+            database.updateTermFrequencies(sliced_fileterms)
+        progress_bar.finish() 
 
     all_fileterms.clear()
 

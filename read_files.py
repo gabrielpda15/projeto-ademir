@@ -41,8 +41,12 @@ def execute(database_name: str, encoding: str = 'utf8', extension: str = '.txt',
                         terms[w] = 0
                     terms[w] += histogramed_file[w]
                     fileterms.append((w, file_id, histogramed_file[w]))
+    progress_bar.finish()
 
+    log(f"Executing iqq filter...", "INFO")
     fileterms = iqqFilter(terms, fileterms, iqq)
+
+    log(f"Saving {len(terms)} terms on database...", "INFO")
 
     database.createTerms(list(terms.items()))
     all_terms = dict([(e.term, e.id) for e in database.getTerms()])
@@ -54,8 +58,9 @@ def execute(database_name: str, encoding: str = 'utf8', extension: str = '.txt',
         if (key not in fileterms_objs_result):
             fileterms_objs_result[key] = FileTerm(obj.file_id, obj.term_id, 0)
         fileterms_objs_result[key].count += obj.count
+    
+    log(f"Saving {len(fileterms_objs_result)} file terms on database...", "INFO")
+
     database.createFileTerms(list(fileterms_objs_result.values()))
-        
-    progress_bar.finish()
         
     log(f"Done reading all files! {getElapsedTime(datetime.now() - time)}", "INFO")
