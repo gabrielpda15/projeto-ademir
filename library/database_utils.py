@@ -524,3 +524,64 @@ class Database:
             return False
         finally:
             connection.close()
+
+    def getGeneralMap(self) -> float:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = """
+                SELECT sum(precision) / (
+                    SELECT count(*)
+                    FROM files
+                    WHERE type = 'query'
+                ) as result
+                FROM files
+                WHERE type = 'query' AND recall > 0            
+            """
+            cur.execute(sql)
+            return cur.fetchone()[0]
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
+        finally:
+            connection.close()
+
+    def getAllFolders(self) -> list[str]:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = "SELECT folder FROM files GROUP BY folder"
+            cur.execute(sql)
+            return [e[0] for e in cur.fetchall()]
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
+        finally:
+            connection.close()
+
+    def getFolderMap(self, folder: str) -> float:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = """
+                SELECT sum(precision) / (
+                    SELECT count(*)
+                    FROM files
+                    WHERE type = 'query' AND folder = ?
+                ) as result
+                FROM files
+                WHERE type = 'query' AND folder = ? AND recall > 0
+            """
+            cur.execute(sql, [folder, folder])
+            return cur.fetchone()[0]
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
+        finally:
+            connection.close()
