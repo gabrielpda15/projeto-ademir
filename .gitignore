@@ -8,3 +8,5 @@ query/*
 
 database.db
 database.db-journal
+
+output/

@@ -39,6 +39,8 @@ class Database:
                     type TEXT NOT NULL,
                     size INTEGER NOT NULL,
                     norm_index REAL DEFAULT 0,
+                    recall REAL DEFAULT 0,
+                    precision REAL DEFAULT 0,
                     PRIMARY KEY(id)
                 )
             """
@@ -229,7 +231,7 @@ class Database:
 
         try:
             cur = connection.cursor()
-            temp_values = ','.join([f'(?,?)' for e in values])
+            temp_values = ','.join([f'({e[0]},{e[1]})' for e in values])
             sql = f"""
                 WITH tmp(term_id, idf) AS (
                     VALUES {temp_values}
@@ -241,7 +243,7 @@ class Database:
                 )
                 WHERE id IN (SELECT term_id FROM tmp)
             """
-            cur.execute(sql, temp_values)
+            cur.execute(sql)
             connection.commit()            
             return True
         except Error as error:
@@ -387,8 +389,7 @@ class Database:
                     WHERE files.id = tmp.id
                 )
                 WHERE id IN (SELECT id FROM tmp)
-            """        
-            cur.execute(sql, temp_values)                
+            """             
             connection.commit()
             return True
         except Error as error:
@@ -464,5 +465,61 @@ class Database:
             log("Something went wrong!", "ERROR")
             log(error.__str__(), "ERROR")
             return -1
+        finally:
+            connection.close()
+
+    def getAnswerSet(self, query_id: int) -> list[tuple[int, str, str, float]]:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = """
+                SELECT f.id, f.code, f.folder, s.value FROM similarities s
+                INNER JOIN files f ON f.id = s.dataset_id
+                WHERE s.query_id = ?
+                ORDER BY s.value DESC
+            """
+            cur.execute(sql, [query_id])
+            return cur.fetchall()
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return -1
+        finally:
+            connection.close()
+
+    def getRelevantDocs(self, query_id: int, folder: str) -> list[tuple[int, str, str, float]]:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = """
+                SELECT f.id, f.code, f.folder, s.value FROM similarities s
+                INNER JOIN files f ON f.id = s.dataset_id
+                WHERE s.query_id = ? AND f.folder = ?
+                ORDER BY s.value DESC
+            """
+            cur.execute(sql, [query_id, folder])
+            return cur.fetchall()
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return -1
+        finally:
+            connection.close()
+
+    def updatePrecisionRecall(self, query_id: int, recall: float, precision: float) -> bool:
+        connection = connect(self.name)
+
+        try:
+            cur = connection.cursor()
+            sql = "UPDATE files SET recall = ?, precision = ? WHERE id = ?"
+            cur.execute(sql, [recall, precision, query_id])
+            connection.commit()
+            return True
+        except Error as error:
+            log("Something went wrong!", "ERROR")
+            log(error.__str__(), "ERROR")
+            return False
         finally:
             connection.close()
