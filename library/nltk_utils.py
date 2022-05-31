@@ -19,7 +19,7 @@ def stemWords(words: list[str]) -> list[str]:
     return [stemmer.stem(w) for w in words]
 
 def iqqFilter(terms: dict[str, int], fileterms: list[tuple[str, int, int]], iqq: float) -> list[tuple[str, int, int]]:
-    mean_value = round(mean([terms[e] for e in terms if e[1] != 1]), None)
+    mean_value = round(mean([terms[e] for e in terms if terms[e] != 1]), None)
     max_value = round(mean_value * (mean_value / iqq), None)
     min_value = round(iqq, None)
     for e in terms:
