@@ -17,9 +17,3 @@ def calcNormIndex(values: list[tuple[int,float]]) -> list[tuple[int,float]]:
             result[item[0]] = 0
         result[item[0]] += pow(item[1], 2)
     return [(k, sqrt(result[k])) for k in result]
-
-def getMean(input_values):    
-    filtered_values = [i for i in list(input_values.values()) if i != 1]
-    if (len(filtered_values) == 0):
-        return 0
-    return int(sum(filtered_values) / len(filtered_values))

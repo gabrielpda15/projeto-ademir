@@ -1,4 +1,5 @@
 from typing import Callable
+from statistics import mean
 import nltk
 
 nltk.download('punkt')
@@ -17,8 +18,11 @@ def stemWords(words: list[str]) -> list[str]:
     stemmer = nltk.stem.PorterStemmer()
     return [stemmer.stem(w) for w in words]
 
-def iqqFilter(terms: dict[str, int], fileterms: list[tuple[str, int, int]], filter: Callable[[str, int],bool]) -> list[tuple[str, int, int]]:
+def iqqFilter(terms: dict[str, int], fileterms: list[tuple[str, int, int]], iqq: float) -> list[tuple[str, int, int]]:
+    mean_value = round(mean([terms[e] for e in terms if e[1] != 1]), None)
+    max_value = round(mean_value * (mean_value / iqq), None)
+    min_value = round(iqq, None)
     for e in terms:
-        if (not filter(e, terms[e])):
+        if (terms[e] < min_value or terms[e] > max_value):
             del terms[e]
     return [e for e in fileterms if e[0] in terms]

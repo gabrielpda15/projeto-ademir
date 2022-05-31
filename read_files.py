@@ -8,7 +8,7 @@ from library.nltk_utils import iqqFilter, stemWords, tokenizeFile
 from library.maths import histogram
 from progress.bar import Bar
 
-def execute(database_name: str, encoding: str = 'utf8', extension: str = '.txt') -> None:
+def execute(database_name: str, encoding: str = 'utf8', extension: str = '.txt', iqq: float = 2.0) -> None:
     database = Database(database_name)
     db_status = database.ensureCreate()
     if not db_status:
@@ -42,7 +42,7 @@ def execute(database_name: str, encoding: str = 'utf8', extension: str = '.txt')
                     terms[w] += histogramed_file[w]
                     fileterms.append((w, file_id, histogramed_file[w]))
 
-    fileterms = iqqFilter(terms, fileterms, (lambda word, count: True))
+    fileterms = iqqFilter(terms, fileterms, iqq)
 
     database.createTerms(list(terms.items()))
     all_terms = dict([(e.term, e.id) for e in database.getTerms()])

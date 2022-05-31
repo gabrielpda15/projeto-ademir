@@ -11,6 +11,7 @@ encoding = 'utf8'
 precisions = [ 10, 20, 50, 100 ]
 out_extension = '.txt'
 in_extension = '.txt'
+iqq = 2.0
 
 run_type = []
 orded_run_types = [ 'read_files', 'tfidf', 'similarity', 'precision', 'maps' ]
@@ -32,11 +33,13 @@ if __name__ == "__main__":
                     in_extension = value
                 elif key == 'out_ext':
                     out_extension = value
+                elif key == 'iqq':
+                    iqq = float(value)
             elif (len(splited) == 1):
                 run_type.append(splited[0][2:])
 
     if ('full' in run_type):
-        read_files.execute(database_name, encoding, in_extension)
+        read_files.execute(database_name, encoding, in_extension, iqq)
         tfidf.execute(database_name)
         similarity.execute(database_name)
         precision.execute(database_name, out_extension, precisions)
