@@ -16,8 +16,9 @@ for item in all_fileterms:
     progress_bar.message = log_header("INFO") + 'Calculating'
     progress_bar.next()
     item.tf = 1 + log2(item.count)
-database.updateTermFrequencies(all_fileterms)
 progress_bar.finish()
+log("Saving term frequency...", "INFO")
+database.updateTermFrequencies(all_fileterms)
 
 all_fileterms.clear()
 
@@ -32,8 +33,9 @@ for term_id in terms_ids:
     progress_bar.message = log_header("INFO") + 'Calculating'
     progress_bar.next()
     idf_result[term_id] = log2(n_files / n_files_per_term[term_id])
-database.updateInverseDocFrequencies(idf_result)
 progress_bar.finish()
+log("Saving inverse document frequency...", "INFO")
+database.updateInverseDocFrequencies(idf_result)
 
 terms_ids.clear()
 n_files_per_term.clear()

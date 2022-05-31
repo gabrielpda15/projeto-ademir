@@ -117,11 +117,8 @@ class Database:
         try:
             cur = connection.cursor()
             sql = f"INSERT OR IGNORE INTO terms (term, count) VALUES "
-            sql += ','.join([f'(?,?)' for e in values])
-            temp_values = []
-            for e in values:
-                temp_values.extend(e)
-            cur.execute(sql, temp_values)
+            sql += ','.join([f'(\'{e[0]}\',{e[1]})' for e in values])
+            cur.execute(sql)
             connection.commit()
             return True
         except Error as error:
@@ -157,13 +154,9 @@ class Database:
 
         try:
             cur = connection.cursor()
-            sql = f"INSERT INTO file_terms(term_id, file_id, count) VALUES {','.join(['(?,?,?)' for e in values])}"
-            temp_values = []
-            for e in values:
-                temp_values.append(e.term_id)
-                temp_values.append(e.file_id)
-                temp_values.append(e.count)
-            cur.execute(sql, temp_values)
+            sql = f"INSERT INTO file_terms(term_id, file_id, count) VALUES "
+            sql += ','.join([f'({e.term_id},{e.file_id},{e.count})' for e in values])
+            cur.execute(sql)
             connection.commit()
             return True
         except Error as error:
@@ -193,9 +186,10 @@ class Database:
 
         try:
             cur = connection.cursor()
+            temp_values = ','.join([f'({e.file_id},{e.term_id},{e.tf})' for e in values])
             sql = f"""
                 WITH tmp(file_id, term_id, tf) AS (
-                    VALUES {','.join([f'(?,?,?)' for e in values])}
+                    VALUES {temp_values}
                 )
                 UPDATE file_terms SET tf = (
                     SELECT tf
@@ -204,12 +198,7 @@ class Database:
                 )
                 WHERE file_id IN (SELECT file_id FROM tmp) AND term_id IN (SELECT term_id FROM tmp)
             """
-            temp_values = []
-            for e in values:
-                temp_values.append(e.file_id)
-                temp_values.append(e.term_id)
-                temp_values.append(e.tf)
-            cur.execute(sql, temp_values)
+            cur.execute(sql)
             connection.commit()
             return True
         except Error as error:
@@ -240,9 +229,10 @@ class Database:
 
         try:
             cur = connection.cursor()
+            temp_values = ','.join([f'(?,?)' for e in values])
             sql = f"""
                 WITH tmp(term_id, idf) AS (
-                    VALUES {','.join([f'(?,?)' for e in values])}
+                    VALUES {temp_values}
                 )
                 UPDATE terms SET idf = (
                     SELECT idf
@@ -251,11 +241,6 @@ class Database:
                 )
                 WHERE id IN (SELECT term_id FROM tmp)
             """
-            temp_values = []
-            for e in values:
-                temp_values.append(e)
-                temp_values.append(values[e])
-
             cur.execute(sql, temp_values)
             connection.commit()            
             return True
@@ -391,9 +376,10 @@ class Database:
 
         try:
             cur = connection.cursor()
+            temp_values = ','.join([f'({e[0]},{e[1]})' for e in values])
             sql = f"""
                 WITH tmp(id, norm_index) AS (
-                    VALUES {','.join([f'(?,?)' for e in values])}
+                    VALUES {temp_values}
                 )
                 UPDATE files SET norm_index = (
                     SELECT norm_index
@@ -401,11 +387,7 @@ class Database:
                     WHERE files.id = tmp.id
                 )
                 WHERE id IN (SELECT id FROM tmp)
-            """
-            temp_values = []
-            for e in values:
-                temp_values.append(e[0])
-                temp_values.append(e[1])            
+            """        
             cur.execute(sql, temp_values)                
             connection.commit()
             return True
@@ -437,13 +419,8 @@ class Database:
         try:
             cur = connection.cursor()
             sql = "INSERT INTO similarities(query_id, dataset_id, value) VALUES "
-            sql += ','.join([f'(?,?,?)' for e in values])
-            temp_values = []
-            for e in values:
-                temp_values.append(e.query_id)
-                temp_values.append(e.dataset_id)
-                temp_values.append(e.value)
-            cur.execute(sql, temp_values)
+            sql += ','.join([f'({e.query_id},{e.dataset_id},{e.value})' for e in values])
+            cur.execute(sql)
             connection.commit()
             return True
         except Error as error:

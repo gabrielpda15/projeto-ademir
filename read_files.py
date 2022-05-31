@@ -47,7 +47,15 @@ fileterms = iqqFilter(terms, fileterms, (lambda word, count: True))
 
 database.createTerms(list(terms.items()))
 all_terms = dict([(e.term, e.id) for e in database.getTerms()])
-database.createFileTerms([FileTerm(e[1], all_terms[e[0]], e[2]) for e in fileterms])
+
+fileterms_objs = [FileTerm(e[1], all_terms[e[0]], e[2]) for e in fileterms]
+fileterms_objs_result: dict[str, FileTerm] = {}
+for obj in fileterms_objs:
+    key = f"{obj.file_id}:{obj.term_id}"
+    if (key not in fileterms_objs_result):
+        fileterms_objs_result[key] = FileTerm(obj.file_id, obj.term_id, 0)
+    fileterms_objs_result[key].count += obj.count
+database.createFileTerms(list(fileterms_objs_result.values()))
     
 progress_bar.finish()
     

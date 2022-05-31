@@ -7,7 +7,7 @@ nltk.download('stopwords')
 stopwords = nltk.corpus.stopwords.words('english')
 
 def tokenizeFile(content: str) -> list[str]:
-    tokenizer = nltk.RegexpTokenizer(r"\w+")
+    tokenizer = nltk.RegexpTokenizer(r"[A-Aa-z]{3,}")
     return removeStopwords(tokenizer.tokenize(content))
 
 def removeStopwords(words: list[str]) -> list[str]:
