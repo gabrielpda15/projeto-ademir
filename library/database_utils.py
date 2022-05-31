@@ -380,16 +380,17 @@ class Database:
             cur = connection.cursor()
             temp_values = ','.join([f'({e[0]},{e[1]})' for e in values])
             sql = f"""
-                WITH tmp(id, norm_index) AS (
+                WITH tmp(file_id, norm_index) AS (
                     VALUES {temp_values}
                 )
                 UPDATE files SET norm_index = (
                     SELECT norm_index
                     FROM tmp
-                    WHERE files.id = tmp.id
+                    WHERE files.id = tmp.file_id
                 )
-                WHERE id IN (SELECT id FROM tmp)
-            """             
+                WHERE id IN (SELECT file_id FROM tmp)
+            """
+            cur.execute(sql)
             connection.commit()
             return True
         except Error as error:

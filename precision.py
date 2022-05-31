@@ -58,5 +58,5 @@ for query in all_queries:
                 file.write(f"{relevant_mark}{sim[2]}\\{sim[1]}.txt = {round(sim[3], 4)}\n")
             file.write(f"\np@{p} = {round(n_relevant * 100 / p, 2)}%")
             file.flush()
-            
+progress_bar.finish()          
 log(f"Done! {getElapsedTime(datetime.now() - time)}", "INFO")

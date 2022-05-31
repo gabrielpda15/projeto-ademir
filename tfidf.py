@@ -32,7 +32,7 @@ progress_bar = Bar(max = len(terms_ids))
 for term_id in terms_ids:
     progress_bar.message = log_header("INFO") + 'Calculating'
     progress_bar.next()
-    idf_result[term_id] = log2(n_files / n_files_per_term[term_id])
+    idf_result[term_id] = log2(1 + (n_files / n_files_per_term[term_id]))
 progress_bar.finish()
 log("Saving inverse document frequency...", "INFO")
 database.updateInverseDocFrequencies(idf_result)
