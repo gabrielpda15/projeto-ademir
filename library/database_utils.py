@@ -534,7 +534,7 @@ class Database:
                 SELECT sum(precision) / (
                     SELECT count(*)
                     FROM files
-                    WHERE type = 'query'
+                    WHERE type = 'dataset'
                 ) as result
                 FROM files
                 WHERE type = 'query' AND recall > 0            
@@ -572,7 +572,7 @@ class Database:
                 SELECT sum(precision) / (
                     SELECT count(*)
                     FROM files
-                    WHERE type = 'query' AND folder = ?
+                    WHERE type = 'dataset' AND folder = ?
                 ) as result
                 FROM files
                 WHERE type = 'query' AND folder = ? AND recall > 0
